@@ -5,6 +5,8 @@ if(COMMAND cmake_policy)
       cmake_policy(SET CMP0003 NEW)  # Required by CMake 2.7+
 endif(COMMAND cmake_policy)
 
+set (CMAKE_CXX_STANDARD 14) # required by MRPT, to use C++14
+
 FIND_PACKAGE(CUDA REQUIRED)
 INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS})
 set(CUDA_NVCC_FLAGS "-arch=sm_20")

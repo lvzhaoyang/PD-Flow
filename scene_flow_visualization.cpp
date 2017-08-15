@@ -23,6 +23,9 @@
 
 #include "scene_flow_visualization.h"
 
+#include <chrono>
+#include <thread>
+
 PD_flow_mrpt::PD_flow_mrpt(unsigned int cam_mode_config, unsigned int fps_config, unsigned int rows_config)
 {     
     rows = rows_config;      //Maximum size of the coarse-to-fine scheme - Default 240 (QVGA)
@@ -351,14 +354,14 @@ void PD_flow_mrpt::initializeScene()
 	scene = window.get3DSceneAndLock();
 
     //Point cloud (final)
-    opengl::CPointCloudPtr fpoints_gl = opengl::CPointCloud::Create();
+    opengl::CPointCloud::Ptr fpoints_gl(new opengl::CPointCloud());
     fpoints_gl->setColor(0, 1, 1);
     fpoints_gl->enablePointSmooth();
     fpoints_gl->setPointSize(3.0);
     scene->insert( fpoints_gl );
 
     //Scene Flow (includes initial point cloud)
-    opengl::CVectorField3DPtr sf = opengl::CVectorField3D::Create();
+    opengl::CVectorField3D::Ptr sf(new opengl::CVectorField3D());
     sf->setPointSize(3.0f);
     sf->setLineWidth(2.0f);
     sf->setPointColor(1,0,0);
@@ -367,7 +370,7 @@ void PD_flow_mrpt::initializeScene()
     scene->insert( sf );
 
     //Reference frame
-    opengl::CSetOfObjectsPtr reference = opengl::stock_objects::CornerXYZ();
+    opengl::CSetOfObjects::Ptr reference = opengl::stock_objects::CornerXYZ();
     reference->setPose(CPose3D(0,0,0,0,0,0));
 	reference->setScale(0.15f);
     scene->insert( reference );
@@ -375,7 +378,7 @@ void PD_flow_mrpt::initializeScene()
 	//Legend
 	utils::CImage img_legend;
 	img_legend.loadFromXPM(legend_pdflow_xpm);
-	opengl::COpenGLViewportPtr legend = scene->createViewport("legend");
+    opengl::COpenGLViewport::Ptr legend = scene->createViewport("legend");
 	legend->setViewportPosition(20, 20, 201, 252);
 	legend->setImageView(img_legend);
 
@@ -390,7 +393,7 @@ void PD_flow_mrpt::updateScene()
 	const unsigned int repr_level = round(log2(colour_wf.getColCount()/cols));
 
 	//Point cloud (final)
-    opengl::CPointCloudPtr fpoints_gl = scene->getByClass<opengl::CPointCloud>(0);
+    opengl::CPointCloud::Ptr fpoints_gl = scene->getByClass<opengl::CPointCloud>(0);
     fpoints_gl->clear();
     for (unsigned int v=0; v<rows; v++)
         for (unsigned int u=0; u<cols; u++)
@@ -399,7 +402,7 @@ void PD_flow_mrpt::updateScene()
 
 
     //Scene flow
-	opengl::CVectorField3DPtr sf = scene->getByClass<opengl::CVectorField3D>(0);
+    opengl::CVectorField3D::Ptr sf = scene->getByClass<opengl::CVectorField3D>(0);
 	sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);
     sf->setVectorField(dx[0], dy[0], dz[0]);
 
@@ -413,7 +416,7 @@ void PD_flow_mrpt::initializePDFlow()
 	initializeScene();
 
     //Initialize CUDA
-    mrpt::system::sleep(500);
+    std::this_thread::sleep_for(500ms);
     initializeCUDA();
 
 	//Start video streaming

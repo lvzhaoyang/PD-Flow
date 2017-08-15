@@ -90,7 +90,7 @@ public:
 
     //Visual
     gui::CDisplayWindow3D       window;
-    opengl::COpenGLScenePtr		scene;
+    opengl::COpenGLScene::Ptr   scene;
     utils::CImage				image;
 
     //OpenNI2 - Camera
